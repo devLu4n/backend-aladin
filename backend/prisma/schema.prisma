@@ -1,0 +1,75 @@
+// Schema do banco de dados - Aladin API
+// Rode `npx prisma migrate dev --name init` depois de configurar o DATABASE_URL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Modalidade {
+  REMOTO
+  HIBRIDO
+  PRESENCIAL
+}
+
+enum StatusVaga {
+  ABERTA
+  FECHADA
+}
+
+// Usuário que faz login na plataforma (representante da empresa que anuncia vagas)
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa Empresa?
+
+  @@map("usuarios")
+}
+
+// Empresa/órgão que publica vagas. 1 usuário -> 1 empresa (conta de contratante)
+model Empresa {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  cnpj        String?  @unique
+  descricao   String?
+  cidade      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  vagas Vaga[]
+
+  @@map("empresas")
+}
+
+// Vaga de TI publicada por uma empresa. Fluxo principal da aplicação.
+model Vaga {
+  id          Int         @id @default(autoincrement())
+  titulo      String
+  descricao   String
+  area        String // frontend, backend, devops, dados, uxui, mobile, ia
+  cidade      String
+  modalidade  Modalidade  @default(PRESENCIAL)
+  tecnologias String // lista separada por vírgula, ex: "React,Node.js"
+  salarioMin  Int?
+  salarioMax  Int?
+  status      StatusVaga  @default(ABERTA)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  empresaId Int
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@map("vagas")
+}
