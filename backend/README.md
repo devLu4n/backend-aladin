@@ -71,7 +71,7 @@ Copie `.env.example` para `.env` e ajuste os valores:
 
 ---
 
-## 🚀 Como rodar localmente
+## Como rodar localmente
 
 ### Pré-requisitos
 - Node.js 18+
@@ -130,7 +130,7 @@ Se rodar o seed, já existe um usuário de teste:
 
 ---
 
-## 🗃️ Estrutura de pastas
+## Estrutura de pastas
 
 ```
 backend/
@@ -151,7 +151,7 @@ backend/
 └── package.json
 ```
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 - Express
 - Prisma ORM + PostgreSQL
