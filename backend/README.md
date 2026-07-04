@@ -57,7 +57,7 @@ Exemplo de busca: `GET /api/vagas?area=backend&cidade=Maceió&modalidade=REMOTO&
 
 ---
 
-## ⚙️ Variáveis de ambiente
+## Variáveis de ambiente
 
 Copie `.env.example` para `.env` e ajuste os valores:
 
