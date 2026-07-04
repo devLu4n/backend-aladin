@@ -6,7 +6,7 @@ Stack: **Node.js + Express + Prisma + PostgreSQL**, autenticação com **bcrypt*
 
 ---
 
-## 🗂️ Entidades
+##  Entidades
 
 | Entidade  | Descrição                                                                 | Relacionamento                              |
 |-----------|----------------------------------------------------------------------------|----------------------------------------------|
@@ -20,7 +20,7 @@ Usuario (1) ── (1) Empresa (1) ── (N) Vaga
 
 ---
 
-## 📌 Endpoints principais
+##  Endpoints principais
 
 ### Autenticação (`/api/auth`)
 
@@ -29,7 +29,7 @@ Usuario (1) ── (1) Empresa (1) ── (N) Vaga
 | POST   | `/api/auth/registro` | Público  | Cria um usuário (senha com hash bcrypt) e já inicia a sessão |
 | POST   | `/api/auth/login`    | Público  | Autentica e cria a sessão (cookie `aladin.sid`) |
 | POST   | `/api/auth/logout`   | Público  | Encerra a sessão                              |
-| GET    | `/api/auth/me`       | 🔒 Privado | Retorna os dados do usuário logado            |
+| GET    | `/api/auth/me`       |  Privado | Retorna os dados do usuário logado            |
 
 ### Empresas (`/api/empresas`)
 
@@ -37,9 +37,9 @@ Usuario (1) ── (1) Empresa (1) ── (N) Vaga
 |--------|---------------------|------------|----------------------------------------------|
 | GET    | `/api/empresas`      | Público    | Lista todas as empresas                      |
 | GET    | `/api/empresas/:id`  | Público    | Detalhe de uma empresa + suas vagas          |
-| POST   | `/api/empresas`      | 🔒 Privado | Cria a empresa do usuário logado (1 por usuário) |
-| PUT    | `/api/empresas/:id`  | 🔒 Privado | Edita a empresa (somente o dono)             |
-| DELETE | `/api/empresas/:id`  | 🔒 Privado | Remove a empresa (somente o dono)            |
+| POST   | `/api/empresas`      | Privado | Cria a empresa do usuário logado (1 por usuário) |
+| PUT    | `/api/empresas/:id`  | Privado | Edita a empresa (somente o dono)             |
+| DELETE | `/api/empresas/:id`  | Privado | Remove a empresa (somente o dono)            |
 
 ### Vagas (`/api/vagas`) — fluxo principal
 
@@ -47,13 +47,13 @@ Usuario (1) ── (1) Empresa (1) ── (N) Vaga
 |--------|------------------|------------|-------------------------------------------------------------|
 | GET    | `/api/vagas`      | Público    | Lista vagas abertas. Filtros via query string: `area`, `cidade`, `modalidade`, `busca`, `page`, `limit` |
 | GET    | `/api/vagas/:id`  | Público    | Detalhe de uma vaga + dados da empresa                      |
-| POST   | `/api/vagas`      | 🔒 Privado | Cria uma vaga vinculada à empresa do usuário logado          |
-| PUT    | `/api/vagas/:id`  | 🔒 Privado | Edita a vaga (somente a empresa dona)                        |
-| DELETE | `/api/vagas/:id`  | 🔒 Privado | Remove a vaga (somente a empresa dona)                       |
+| POST   | `/api/vagas`      | Privado | Cria uma vaga vinculada à empresa do usuário logado          |
+| PUT    | `/api/vagas/:id`  | Privado | Edita a vaga (somente a empresa dona)                        |
+| DELETE | `/api/vagas/:id`  | Privado | Remove a vaga (somente a empresa dona)                       |
 
 Exemplo de busca: `GET /api/vagas?area=backend&cidade=Maceió&modalidade=REMOTO&busca=Node&page=1&limit=10`
 
-> 🔒 Rotas privadas exigem estar logado (cookie de sessão enviado automaticamente pelo navegador após `/login`). Ao testar em ferramentas como Insomnia/Postman, habilite "enviar cookies" / use a mesma aba de requisições para manter a sessão.
+> Rotas privadas exigem estar logado (cookie de sessão enviado automaticamente pelo navegador após `/login`). Ao testar em ferramentas como Insomnia/Postman, habilite "enviar cookies" / use a mesma aba de requisições para manter a sessão.
 
 ---
 
@@ -71,7 +71,7 @@ Copie `.env.example` para `.env` e ajuste os valores:
 
 ---
 
-## 🚀 Como rodar localmente
+## Como rodar localmente
 
 ### Pré-requisitos
 - Node.js 18+
@@ -130,7 +130,7 @@ Se rodar o seed, já existe um usuário de teste:
 
 ---
 
-## 🗃️ Estrutura de pastas
+## Estrutura de pastas
 
 ```
 backend/
@@ -151,7 +151,7 @@ backend/
 └── package.json
 ```
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 - Express
 - Prisma ORM + PostgreSQL
