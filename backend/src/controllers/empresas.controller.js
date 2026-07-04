@@ -1,6 +1,11 @@
 const prisma = require("../config/prisma");
 
-// GET /api/empresas -> pública, lista todas as empresas
+function parseId(value) {
+  const id = parseInt(value, 10);
+  if (isNaN(id) || id <= 0) return null;
+  return id;
+}
+
 async function listar(req, res, next) {
   try {
     const empresas = await prisma.empresa.findMany({
@@ -13,17 +18,20 @@ async function listar(req, res, next) {
   }
 }
 
-// GET /api/empresas/:id -> pública, detalhe de uma empresa com suas vagas
 async function buscarPorId(req, res, next) {
   try {
-    const id = Number(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ erro: "ID invalido. Deve ser um inteiro positivo." });
+    }
+
     const empresa = await prisma.empresa.findUnique({
       where: { id },
       include: { vagas: true },
     });
 
     if (!empresa) {
-      return res.status(404).json({ erro: "Empresa não encontrada." });
+      return res.status(404).json({ erro: "Empresa nao encontrada." });
     }
 
     res.json(empresa);
@@ -32,20 +40,19 @@ async function buscarPorId(req, res, next) {
   }
 }
 
-// POST /api/empresas -> privada, cria o perfil de empresa do usuário logado
 async function criar(req, res, next) {
   try {
     const { nome, cnpj, descricao, cidade } = req.body;
 
     if (!nome) {
-      return res.status(400).json({ erro: "nome é obrigatório." });
+      return res.status(400).json({ erro: "nome e obrigatorio." });
     }
 
     const empresaExistente = await prisma.empresa.findUnique({
       where: { usuarioId: req.session.usuarioId },
     });
     if (empresaExistente) {
-      return res.status(409).json({ erro: "Este usuário já possui uma empresa cadastrada." });
+      return res.status(409).json({ erro: "Este usuario ja possui uma empresa cadastrada." });
     }
 
     const empresa = await prisma.empresa.create({
@@ -58,17 +65,20 @@ async function criar(req, res, next) {
   }
 }
 
-// PUT /api/empresas/:id -> privada, somente o dono pode editar
 async function atualizar(req, res, next) {
   try {
-    const id = Number(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ erro: "ID invalido. Deve ser um inteiro positivo." });
+    }
+
     const empresa = await prisma.empresa.findUnique({ where: { id } });
 
     if (!empresa) {
-      return res.status(404).json({ erro: "Empresa não encontrada." });
+      return res.status(404).json({ erro: "Empresa nao encontrada." });
     }
     if (empresa.usuarioId !== req.session.usuarioId) {
-      return res.status(403).json({ erro: "Você não tem permissão para editar esta empresa." });
+      return res.status(403).json({ erro: "Voce nao tem permissao para editar esta empresa." });
     }
 
     const { nome, cnpj, descricao, cidade } = req.body;
@@ -83,17 +93,20 @@ async function atualizar(req, res, next) {
   }
 }
 
-// DELETE /api/empresas/:id -> privada, somente o dono pode excluir
 async function remover(req, res, next) {
   try {
-    const id = Number(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ erro: "ID invalido. Deve ser um inteiro positivo." });
+    }
+
     const empresa = await prisma.empresa.findUnique({ where: { id } });
 
     if (!empresa) {
-      return res.status(404).json({ erro: "Empresa não encontrada." });
+      return res.status(404).json({ erro: "Empresa nao encontrada." });
     }
     if (empresa.usuarioId !== req.session.usuarioId) {
-      return res.status(403).json({ erro: "Você não tem permissão para excluir esta empresa." });
+      return res.status(403).json({ erro: "Voce nao tem permissao para excluir esta empresa." });
     }
 
     await prisma.empresa.delete({ where: { id } });

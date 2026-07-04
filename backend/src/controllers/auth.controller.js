@@ -3,22 +3,31 @@ const prisma = require("../config/prisma");
 
 const SALT_ROUNDS = 10;
 
-// Remove a senhaHash antes de devolver o usuário para o cliente
 function serializeUsuario(usuario) {
   const { senhaHash, ...resto } = usuario;
   return resto;
 }
 
-// POST /api/auth/registro
 async function registrar(req, res, next) {
   try {
-    const { nome, email, senha } = req.body;
+    const { nome, senha } = req.body;
+    let { email } = req.body;
 
     if (!nome || !email || !senha) {
-      return res.status(400).json({ erro: "nome, email e senha são obrigatórios." });
+      return res.status(400).json({ erro: "nome, email e senha sao obrigatorios." });
+    }
+    if (typeof senha !== "string") {
+      return res.status(400).json({ erro: "senha deve ser uma string." });
     }
     if (senha.length < 6) {
       return res.status(400).json({ erro: "A senha deve ter pelo menos 6 caracteres." });
+    }
+
+    email = String(email).trim().toLowerCase();
+
+    const existente = await prisma.usuario.findUnique({ where: { email } });
+    if (existente) {
+      return res.status(409).json({ erro: "Este email ja esta cadastrado." });
     }
 
     const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
@@ -27,11 +36,17 @@ async function registrar(req, res, next) {
       data: { nome, email, senhaHash },
     });
 
-    // login automático após o cadastro: guarda o id do usuário na sessão
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
     req.session.usuarioId = usuario.id;
 
     res.status(201).json({
-      mensagem: "Usuário cadastrado com sucesso.",
+      mensagem: "Usuario cadastrado com sucesso.",
       usuario: serializeUsuario(usuario),
     });
   } catch (err) {
@@ -39,24 +54,39 @@ async function registrar(req, res, next) {
   }
 }
 
-// POST /api/auth/login
 async function login(req, res, next) {
   try {
-    const { email, senha } = req.body;
+    let { email, senha } = req.body;
 
     if (!email || !senha) {
-      return res.status(400).json({ erro: "email e senha são obrigatórios." });
+      return res.status(400).json({ erro: "email e senha sao obrigatorios." });
     }
+    if (typeof senha !== "string") {
+      return res.status(400).json({ erro: "senha deve ser uma string." });
+    }
+
+    email = String(email).trim().toLowerCase();
 
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario) {
-      return res.status(401).json({ erro: "Credenciais inválidas." });
+      return res.status(401).json({ erro: "Credenciais invalidas." });
+    }
+
+    if (!usuario.senhaHash) {
+      return res.status(401).json({ erro: "Credenciais invalidas." });
     }
 
     const senhaCorreta = await bcrypt.compare(senha, usuario.senhaHash);
     if (!senhaCorreta) {
-      return res.status(401).json({ erro: "Credenciais inválidas." });
+      return res.status(401).json({ erro: "Credenciais invalidas." });
     }
+
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
 
     req.session.usuarioId = usuario.id;
 
@@ -69,7 +99,6 @@ async function login(req, res, next) {
   }
 }
 
-// POST /api/auth/logout
 function logout(req, res, next) {
   req.session.destroy((err) => {
     if (err) return next(err);
@@ -78,16 +107,19 @@ function logout(req, res, next) {
   });
 }
 
-// GET /api/auth/me -> rota privada, exige sessão ativa
 async function me(req, res, next) {
   try {
+    if (!req.session || !req.session.usuarioId) {
+      return res.status(401).json({ erro: "Nao autenticado." });
+    }
+
     const usuario = await prisma.usuario.findUnique({
       where: { id: req.session.usuarioId },
       include: { empresa: true },
     });
 
     if (!usuario) {
-      return res.status(404).json({ erro: "Usuário não encontrado." });
+      return res.status(404).json({ erro: "Usuario nao encontrado." });
     }
 
     res.json({ usuario: serializeUsuario(usuario) });

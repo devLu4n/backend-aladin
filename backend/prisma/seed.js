@@ -55,7 +55,7 @@ async function main() {
     ],
   });
 
-  console.log("🌱 Seed concluído com sucesso.");
+  console.log("Seed concluido com sucesso.");
   console.log(`   Login de teste -> email: ${usuario.email} | senha: 123456`);
 }
 

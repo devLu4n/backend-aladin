@@ -4,10 +4,10 @@ const { requireAuth } = require("../middlewares/auth");
 
 const router = Router();
 
-router.get("/", empresasController.listar); // pública
-router.get("/:id", empresasController.buscarPorId); // pública
-router.post("/", requireAuth, empresasController.criar); // privada
-router.put("/:id", requireAuth, empresasController.atualizar); // privada
-router.delete("/:id", requireAuth, empresasController.remover); // privada
+router.get("/", empresasController.listar);
+router.get("/:id", empresasController.buscarPorId);
+router.post("/", requireAuth, empresasController.criar);
+router.put("/:id", requireAuth, empresasController.atualizar);
+router.delete("/:id", requireAuth, empresasController.remover);
 
 module.exports = router;

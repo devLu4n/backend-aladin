@@ -7,7 +7,7 @@ const vagasRoutes = require("./vagas.routes");
 const router = Router();
 
 router.get("/", (req, res) => {
-  res.json({ mensagem: "API do Aladin no ar 🚀" });
+  res.json({ mensagem: "API do Aladin no ar" });
 });
 
 router.use("/auth", authRoutes);
