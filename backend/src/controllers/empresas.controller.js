@@ -1,10 +1,5 @@
 const prisma = require("../config/prisma");
-
-function parseId(value) {
-  const id = parseInt(value, 10);
-  if (isNaN(id) || id <= 0) return null;
-  return id;
-}
+const { parseId } = require("../utils/parseId");
 
 async function listar(req, res, next) {
   try {

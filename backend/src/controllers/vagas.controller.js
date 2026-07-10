@@ -1,13 +1,8 @@
 const prisma = require("../config/prisma");
+const { parseId } = require("../utils/parseId");
 
 const MODALIDADES_VALIDAS = ["REMOTO", "HIBRIDO", "PRESENCIAL"];
 const STATUS_VALIDOS = ["ABERTA", "FECHADA"];
-
-function parseId(value) {
-  const id = parseInt(value, 10);
-  if (isNaN(id) || id <= 0) return null;
-  return id;
-}
 
 function validarSalario(salarioMin, salarioMax) {
   const erros = [];
