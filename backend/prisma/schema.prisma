@@ -18,15 +18,31 @@ enum StatusVaga {
   FECHADA
 }
 
+enum Role {
+  CANDIDATO
+  EMPRESA
+  ADMIN
+}
+
+enum StatusCandidatura {
+  PENDENTE
+  EM_ANALISE
+  ENTREVISTA
+  APROVADO
+  REJEITADO
+}
+
 model Usuario {
   id        Int      @id @default(autoincrement())
   nome      String
   email     String   @unique
   senhaHash String
+  role      Role     @default(CANDIDATO)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  empresa Empresa?
+  empresa   Empresa?
+  candidato Candidato?
 
   @@map("usuarios")
 }
@@ -65,5 +81,41 @@ model Vaga {
   empresaId Int
   empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
+  candidaturas Candidatura[]
+
   @@map("vagas")
+}
+
+model Candidato {
+  id         Int      @id @default(autoincrement())
+  telefone   String?
+  linkedin   String?
+  cidade     String?
+  curriculo  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  usuarioId Int      @unique
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  candidaturas Candidatura[]
+
+  @@map("candidatos")
+}
+
+model Candidatura {
+  id        Int                @id @default(autoincrement())
+  status    StatusCandidatura  @default(PENDENTE)
+  mensagem  String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  candidatoId Int
+  candidato   Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+
+  vagaId Int
+  vaga   Vaga @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+
+  @@unique([candidatoId, vagaId])
+  @@map("candidaturas")
 }
