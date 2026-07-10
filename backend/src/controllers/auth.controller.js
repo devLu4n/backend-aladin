@@ -10,7 +10,7 @@ function serializeUsuario(usuario) {
 
 async function registrar(req, res, next) {
   try {
-    const { nome, senha } = req.body;
+    const { nome, senha, role } = req.body;
     let { email } = req.body;
 
     if (!nome || !email || !senha) {
@@ -23,6 +23,11 @@ async function registrar(req, res, next) {
       return res.status(400).json({ erro: "A senha deve ter pelo menos 6 caracteres." });
     }
 
+    const ROLES_PERMITIDAS = ["CANDIDATO", "EMPRESA"];
+    const roleUsuario = role && ROLES_PERMITIDAS.includes(String(role).toUpperCase())
+      ? String(role).toUpperCase()
+      : "CANDIDATO";
+
     email = String(email).trim().toLowerCase();
 
     const existente = await prisma.usuario.findUnique({ where: { email } });
@@ -33,7 +38,7 @@ async function registrar(req, res, next) {
     const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
 
     const usuario = await prisma.usuario.create({
-      data: { nome, email, senhaHash },
+      data: { nome, email, senhaHash, role: roleUsuario },
     });
 
     await new Promise((resolve, reject) => {
@@ -115,7 +120,7 @@ async function me(req, res, next) {
 
     const usuario = await prisma.usuario.findUnique({
       where: { id: req.session.usuarioId },
-      include: { empresa: true },
+      include: { empresa: true, candidato: true },
     });
 
     if (!usuario) {
