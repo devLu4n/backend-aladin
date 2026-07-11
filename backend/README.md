@@ -6,30 +6,37 @@ Stack: **Node.js + Express + Prisma + PostgreSQL**, autenticação com **bcrypt*
 
 ---
 
-##  Entidades
+## Entidades
 
-| Entidade  | Descrição                                                                 | Relacionamento                              |
-|-----------|----------------------------------------------------------------------------|----------------------------------------------|
-| `Usuario` | Conta usada para login (representante da empresa/órgão que anuncia vagas) | 1 Usuario → 1 Empresa                        |
-| `Empresa` | Empresa/órgão público que publica vagas                                   | 1 Empresa → N Vagas                          |
-| `Vaga`    | Vaga de TI publicada por uma empresa (fluxo principal da aplicação)       | N Vagas → 1 Empresa                          |
+| Entidade     | Descrição                                                                    | Relacionamento                                  |
+|--------------|-------------------------------------------------------------------------------|---------------------------------------------------|
+| `Usuario`    | Conta usada para login, com `role` (`EMPRESA`, `CANDIDATO` ou `ADMIN`)        | 1 Usuario → 1 Empresa **ou** 1 Usuario → 1 Candidato |
+| `Empresa`    | Empresa/órgão público que publica vagas                                      | 1 Empresa → N Vagas                                |
+| `Vaga`       | Vaga de TI publicada por uma empresa (fluxo principal da aplicação)          | N Vagas → 1 Empresa                                |
+| `Candidato`  | Perfil do usuário candidato (currículo, dados profissionais)                 | 1 Usuario → 1 Candidato                            |
+| `Candidatura`| Vínculo entre um candidato e uma vaga, com status do processo seletivo       | N Candidaturas → 1 Candidato / N Candidaturas → 1 Vaga |
+
+Status possíveis de uma `Candidatura`: `PENDENTE`, `EM_ANALISE`, `ENTREVISTA`, `APROVADO`, `REJEITADO`.
 
 ```
-Usuario (1) ── (1) Empresa (1) ── (N) Vaga
+Usuario (role: EMPRESA)   (1) ── (1) Empresa (1) ── (N) Vaga
+Usuario (role: CANDIDATO) (1) ── (1) Candidato (N) ── (N) Vaga   [via Candidatura]
 ```
 
 ---
 
-##  Endpoints principais
+## Endpoints principais
 
 ### Autenticação (`/api/auth`)
 
 | Método | Rota             | Acesso   | Descrição                                    |
 |--------|------------------|----------|-----------------------------------------------|
-| POST   | `/api/auth/registro` | Público  | Cria um usuário (senha com hash bcrypt) e já inicia a sessão |
+| POST   | `/api/auth/registro` | Público  | Cria um usuário com `role` (`EMPRESA` ou `CANDIDATO`), senha com hash bcrypt, e já inicia a sessão |
 | POST   | `/api/auth/login`    | Público  | Autentica e cria a sessão (cookie `aladin.sid`) |
 | POST   | `/api/auth/logout`   | Público  | Encerra a sessão                              |
-| GET    | `/api/auth/me`       |  Privado | Retorna os dados do usuário logado            |
+| GET    | `/api/auth/me`       | Privado  | Retorna os dados do usuário logado, incluindo a `role` |
+
+> As rotas de `Empresas` e `Vagas` exigem `role: EMPRESA`. As rotas de `Candidatos` e as ações de candidato em `Candidaturas` exigem `role: CANDIDATO`. As ações de empresa em `Candidaturas` (listar por vaga, atualizar status) aceitam `role: EMPRESA` ou `role: ADMIN`.
 
 ### Empresas (`/api/empresas`)
 
@@ -52,6 +59,25 @@ Usuario (1) ── (1) Empresa (1) ── (N) Vaga
 | DELETE | `/api/vagas/:id`  | Privado | Remove a vaga (somente a empresa dona)                       |
 
 Exemplo de busca: `GET /api/vagas?area=backend&cidade=Maceió&modalidade=REMOTO&busca=Node&page=1&limit=10`
+
+### Candidatos (`/api/candidatos`)
+
+| Método | Rota                  | Acesso              | Descrição                                  |
+|--------|-----------------------|----------------------|-----------------------------------------------|
+| GET    | `/api/candidatos/me`   | Privado (CANDIDATO) | Retorna o perfil do candidato logado          |
+| POST   | `/api/candidatos`      | Privado (CANDIDATO) | Cria o perfil de candidato do usuário logado (1 por usuário) |
+| PUT    | `/api/candidatos/me`   | Privado (CANDIDATO) | Edita o perfil do candidato logado (currículo, dados profissionais) |
+| GET    | `/api/candidatos/:id`  | Público              | Detalhe do perfil de um candidato             |
+
+### Candidaturas (`/api/candidaturas`)
+
+| Método | Rota                                   | Acesso                       | Descrição                                                |
+|--------|------------------------------------------|--------------------------------|--------------------------------------------------------------|
+| POST   | `/api/candidaturas/vagas/:vagaId`         | Privado (CANDIDATO)            | Candidato se candidata à vaga `:vagaId`                       |
+| GET    | `/api/candidaturas/minhas`                | Privado (CANDIDATO)            | Lista as candidaturas do candidato logado                    |
+| DELETE | `/api/candidaturas/:id`                   | Privado (CANDIDATO)            | Cancela uma candidatura                                       |
+| GET    | `/api/candidaturas/vagas/:vagaId`         | Privado (EMPRESA, ADMIN)       | Lista as candidaturas recebidas pela vaga `:vagaId`           |
+| PATCH  | `/api/candidaturas/:id/status`            | Privado (EMPRESA, ADMIN)       | Atualiza o status da candidatura (`PENDENTE` → `EM_ANALISE` → `ENTREVISTA` → `APROVADO`/`REJEITADO`) |
 
 > Rotas privadas exigem estar logado (cookie de sessão enviado automaticamente pelo navegador após `/login`). Ao testar em ferramentas como Insomnia/Postman, habilite "enviar cookies" / use a mesma aba de requisições para manter a sessão.
 
@@ -105,10 +131,10 @@ A API vai subir em `http://localhost:3333`.
 ### Testando rapidamente com curl
 
 ```bash
-# Cadastro
+# Cadastro (role EMPRESA ou CANDIDATO)
 curl -i -c cookies.txt -X POST http://localhost:3333/api/auth/registro \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Minha Empresa","email":"teste@empresa.com","senha":"123456"}'
+  -d '{"nome":"Minha Empresa","email":"teste@empresa.com","senha":"123456","role":"EMPRESA"}'
 
 # Criar empresa (rota privada, usa o cookie salvo acima)
 curl -i -b cookies.txt -X POST http://localhost:3333/api/empresas \
